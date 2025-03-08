@@ -22,55 +22,38 @@ if you _aren't_ using a debugger and want the runner to flash the firmware via U
 [`picotool`][13], etc.) then see: [Alternative Runners][14]
 
 ## Table of Contents
-1. [Requirements](#requirements)
-2. [Setup](#setup)
-    1. [System Setup](#system-setup)
-    2. [Probe Setup](#probe-setup)
-    3. [Hardware Setup](#hardware-setup)
-3. [Usage](#usage)
-6. [Appendix](#appendix)
+- [Table of Contents](#table-of-contents)
+- [Requirements](#requirements)
+- [Setup](#setup)
+  - [System Setup](#system-setup)
+  - [Probe Setup](#probe-setup)
+  - [Hardware Setup](#hardware-setup)
+    - [Connecting the Raspberry Pi Pico Debug Probe](#connecting-the-raspberry-pi-pico-debug-probe)
+    - [Raspberry Pi Pico Dev Board](#raspberry-pi-pico-dev-board)
+- [Usage](#usage)
+    - [Stating the Nix shell](#stating-the-nix-shell)
+    - [Running](#running)
+    - [Logging](#logging)
+- [Appendix](#appendix)
+    - [Documentation](#documentation)
+    - [Resources](#resources)
 
 ## Requirements
-* Ubuntu
+* Nix with flakes enabled
 * Raspberry Pi Pico
 * Debug Probe (*or* another Raspberry Pi Pico)
-* Rust Toolchain ([`cargo`][8], [`rustup`][15])
 
 ## Setup
 ### System Setup
-1. Install [Rust][3] and [`cargo`][8] using [`rustup`][15]
-```shell
-# Install `rustup` for Rust Toolchain
-$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+1. Create udev the rules inside of `configuration.nix`
+```nix
+services.udev.extraRules = ''ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="000c", MODE:="0666", GROUP="plugdev"'';
 ```
 
-2. Install Cortex-M Target Toolchain Support for [`Rust`][3]
-```shell
-# Install `thumbv6m-none-eabi` Target for `rp2040`
-$ rustup target add thumbv6m-none-eabi
-```
-
-3. Install [`probe-run`][7]
-```shell
-# Install Linux Dependencies
-$ sudo apt install -y libusb-1.0-0-dev libudev-dev
-
-# Install `probe-run`
-$ cargo install probe-run
-
-# (Optional) Install `udev` Rules and Reload
-$ sudo curl https://probe.rs/files/69-probe-rs.rules -o /etc/udev/rules.d/69-probe-rs.rules
-$ sudo udevadm control --reload
-$ sudo udevadm trigger
-
-# (Optional) Add User to `plugdev` Group
-$ sudo usermod -aG plugdev $USER
-```
-
-4. Install [`flip-link`][6]
-```shell
-# Install `flip-link`
-$ cargo install flip-link
+2. Add your user to the plugdev group inside of `configuration.nix`
+```nix
+users.groups.plugdev = { }; # Needed to create the group
+users.users.YOUR_USER.extraGroups = [ "plugdev" ];
 ```
 
 ### Probe Setup
@@ -130,6 +113,11 @@ For more information on printing your own custom Raspberry Pi Pico Dev Board, se
 [Raspberry Pi Pico Dev Board][19]
 
 ## Usage
+#### Stating the Nix shell
+```shell
+$ nix develop # Run this inside the directory that contains flake.nix
+```
+
 #### Running
 To run the firmware in debug mode:
 ```shell
